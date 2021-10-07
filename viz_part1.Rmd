@@ -5,6 +5,11 @@ date: September 16th, 2021
 output: github_document
   
 ---
+Load in a dataset that we'll use often.
+```{r}
+library(tidyverse)
+library(ggridges)
+```
 
 ```{r}
 weather_df = 
@@ -12,7 +17,7 @@ weather_df =
     c("USW00094728", "USC00519397", "USS0023B17S"),
     var = c("PRCP", "TMIN", "TMAX"), 
     date_min = "2017-01-01",
-    date_max = "2017-12-31") %>%
+    date_max = "2017-12-31") %>% 
   mutate(
     name = recode(
       id, 
@@ -23,4 +28,39 @@ weather_df =
     tmax = tmax / 10) %>%
   select(name, id, everything())
 ```
+
+## Scatterpolot
+
+tmax vs tmin
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+You can save gglots
+
+```{r}
+ggplot_tmax_tmin = 
+  weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+
+ggplot_tmax_tmin
+```
+
+## Let's fancy it up
+
+Add...color? lines? other stuff?
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .3) +
+  geom_smooth(se = FALSE) +
+  facet_grid(.~ name)
+```
+
+
 
