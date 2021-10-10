@@ -25,6 +25,7 @@ library(viridis)
     ## Loading required package: viridisLite
 
 ``` r
+library(patchwork)
 knitr::opts_chunk$set(
   fig.width = 6,
   fig.asp = .6, 
@@ -162,3 +163,39 @@ waikiki %>%
     ## Warning: Removed 3 rows containing missing values (geom_point).
 
 <img src="viz_part2_files/figure-gfm/unnamed-chunk-5-1.png" width="90%" />
+
+## `patchwork`
+
+``` r
+ggp_tmax_tmin = 
+  weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .3) + 
+  theme(legend.position = "none")
+
+ggp_prcp_dens =
+  weather_df %>% 
+  filter(prcp > 0) %>% 
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_density(alpha = .3) + 
+  theme(legend.position = "none")
+
+ggp_tmax_date =
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point() +
+  geom_smooth() + 
+  theme(legend.position = "bottom")
+
+(ggp_tmax_tmin + ggp_prcp_dens) / ggp_tmax_date
+```
+
+    ## Warning: Removed 15 rows containing missing values (geom_point).
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+    ## Warning: Removed 3 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 3 rows containing missing values (geom_point).
+
+<img src="viz_part2_files/figure-gfm/unnamed-chunk-6-1.png" width="90%" />

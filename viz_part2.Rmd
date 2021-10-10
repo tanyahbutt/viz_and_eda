@@ -9,6 +9,7 @@ output: github_document
 library(tidyverse)
 library(ggridges)
 library(viridis)
+library(patchwork)
 knitr::opts_chunk$set(
   fig.width = 6,
   fig.asp = .6, 
@@ -99,5 +100,31 @@ waikiki %>%
   ggplot(aes(x = date, y = tmax, color = name)) +
   geom_point() +
   geom_line(data = central_park)
+```
+
+## `patchwork`
+
+```{r}
+ggp_tmax_tmin = 
+  weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .3) + 
+  theme(legend.position = "none")
+
+ggp_prcp_dens =
+  weather_df %>% 
+  filter(prcp > 0) %>% 
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_density(alpha = .3) + 
+  theme(legend.position = "none")
+
+ggp_tmax_date =
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point() +
+  geom_smooth() + 
+  theme(legend.position = "bottom")
+
+(ggp_tmax_tmin + ggp_prcp_dens) / ggp_tmax_date
 ```
 
