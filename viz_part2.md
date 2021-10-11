@@ -199,3 +199,20 @@ ggp_tmax_date =
     ## Warning: Removed 3 rows containing missing values (geom_point).
 
 <img src="viz_part2_files/figure-gfm/unnamed-chunk-6-1.png" width="90%" />
+
+## data manipulation
+
+quick example on factors
+
+``` r
+weather_df %>% 
+  mutate(
+    name = fct_reorder(name, tmax)
+  ) %>% 
+  ggplot(aes(x = name, y = tmax)) +
+  geom_boxplot()
+```
+
+    ## Warning: Removed 3 rows containing non-finite values (stat_boxplot).
+
+<img src="viz_part2_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" />
