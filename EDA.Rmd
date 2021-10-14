@@ -1,0 +1,226 @@
+---
+title: "EDA - group by and summarize"
+author: Tanya Butt
+output: github_document
+  
+---
+
+```{r}
+library(tidyverse)
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6, 
+  out.width = "90%"
+)
+```
+Load in a dataset that we'll use often.
+```{r}
+weather_df =  
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10,
+    month = lubridate::floor_date(date, unit = "month")) %>%
+  select(name, id, everything())
+```
+
+## 'group_by'
+
+```{r}
+weather_df %>% 
+ group_by(name, month)
+```
+
+## count some things
+
+```{r}
+weather_df %>% 
+  group_by(month) %>% 
+  summarize(n_obs = n())
+
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(n_obs = n())
+
+weather_df %>% 
+  count(name)
+
+weather_df %>% 
+  count(month, name = "n_obs")
+
+```
+
+It's nice that summarize produces a data frame.
+'table' doesn't do that, and it's bad.
+
+```{r}
+weather_df %>% 
+  pull(name) %>% 
+  table()
+```
+
+```{r}
+weather_df %>% 
+  janitor::tabyl(month, name)
+```
+
+## More general summaries 
+
+Let's count, take means, look at SDs...
+
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(
+    n_obs = n(),
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    sd_tmax = sd(tmax, na.rm = TRUE)
+  ) %>% 
+  ggplot(aes(x = month, y = mean_tmax, color = name)) +
+  geom_point() + 
+  geom_line()
+```
+
+Formatting table outputs.
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  summarize(
+    n_obs = n(),
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) %>% 
+  knitr::kable(digits = 2)
+```
+
+## grouped 'mutate'
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    centered_tmax = tmax - mean_tmax) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) +
+  geom_point()
+```
+
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    tmax_rank = min_rank(desc(tmax))
+  ) %>% 
+  filter(tmax_rank < 2)
+
+weather_df %>% 
+  group_by(month) %>% 
+  summarize(
+    n_obs = n(),
+    n_days = n_distinct(date))
+
+weather_df %>% 
+  mutate(
+    cold = case_when(
+      tmax < 5 ~ "cold",
+      tmax >= 5 ~ "not_cold",
+      TRUE ~ ""
+    )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  group_by(name, cold) %>% 
+  summarize(count = n())
+
+weather_df %>% 
+  mutate(cold = case_when(
+    tmax < 5 ~ "cold",
+    tmax >= 5 ~ "not_cold",
+    TRUE      ~ ""
+  )) %>% 
+  filter(name != "Waikiki_HA") %>% 
+  janitor::tabyl(name, cold)
+```
+
+Lagged Variables 
+
+```{r}
+#what's the lag information from the day before
+weather_df %>% 
+  group_by(name) %>% 
+  mutate(
+    lagged_tmax = lag(tmax, n = 1),
+    tmax_diff = tmax - lagged_tmax
+  ) %>% 
+  summarize(diff_sd = sd(tmax_diff, na.rm = TRUE))
+```
+
+## Limitations 
+
+What if my "summary" is a linear model...
+
+Well...that doesn't work
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  summarize(cor_tmin_tmax = cor(tmin, tmax, use = "complete"))
+
+weather_df %>% 
+  filter(name == "CentralPark_NY") %>% 
+  lm(tmax ~ tmin, data = .)
+
+```
+
+## general summaries
+
+```{r}
+weather_df %>% 
+  group_by(month) %>% 
+  summarize(
+    mean_tmax = mean(tmax),
+    mean_prec = mean(prcp, na.rm = TRUE),
+    median_tmax = median(tmax),
+    sd_tmax = sd(tmax))
+ 
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(
+    mean_tmax = mean(tmax),
+    median_tmax = median(tmax))
+
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(across(tmin:prcp, mean))
+
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(mean_tmax = mean(tmax)) %>% 
+  ggplot(aes(x = month, y = mean_tmax, color = name)) +
+  geom_point() + geom_line() +
+  theme(legend.position = "bottom")
+
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(mean_tmax = mean(tmax)) %>% 
+  pivot_wider(
+    names_from = name,
+    values_from = mean_tmax) %>% 
+  knitr::kable(digits = 1)
+```
+
+## Grouped mutate
+
+```{r}
+weather_df %>% 
+  group_by(name) %>% 
+  mutate
+```
+
